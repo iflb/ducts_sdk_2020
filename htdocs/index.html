@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./main.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script defer src="./main.js"></script>
+    <title>Ducts Tutorial</title>
+  </head>
+  <body>
+    <div id="app" class="wrapper">
+      <h1 class="title">{{ title }}</h1>
+      <div class="main" id="main">
+	<ol>
+	  <li v-for="(chapter, i) in chapters">
+	    {{ chapter.name }}
+	    <ol>
+	      <li v-for="(section, i) in chapter.sections">
+		<a v-bind:href="'./'+section.dir+'/index.html'">{{ section.name }}</a>
+	      </li>
+	    </ol>
+	  </li>
+	</ol>
+	<div>
+	  Language:
+	  <span v-for="(l, i) in lang">
+	    <a v-bind:href="'./index.html?lang='+l">{{ l + '&nbsp;'}}</a>
+	  </span>
+	</div>
+	<hr />
+	<div>
+	  <span><a href="./api/ducts/">Ducts Handler Service Provider Interface</a></span>
+	</div>
+      </div>
+    </div>
+  </body>
+</html>
+
