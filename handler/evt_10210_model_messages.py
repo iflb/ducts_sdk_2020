@@ -18,7 +18,6 @@ class Handler(EventHandler):
         subkey = 'PUBSUB/STREAM/MESSAGE'
         streamkey = 'VIEW/STREAM/MESSAGES'
         async for kv in event.session.redis.psub_and_xrange_str(subkey, streamkey, last_count = 5):
-            print(kv)
             yield kv
 
     async def handle_closed(self, event_session):
