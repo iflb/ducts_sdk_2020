@@ -41,6 +41,7 @@
 </font></dt><dt><font face="helvetica, arial"><a href="ducts.spi.html#EventHandlerManager">EventHandlerManager</a>
 </font></dt><dt><font face="helvetica, arial"><a href="ducts.spi.html#EventSession">EventSession</a>
 </font></dt><dt><font face="helvetica, arial"><a href="ducts.spi.html#HandlerSpec">HandlerSpec</a>
+</font></dt><dt><font face="helvetica, arial"><a href="ducts.spi.html#RedisClient">RedisClient</a>
 </font></dt></dl>
 </dd>
 </dl>
@@ -122,9 +123,11 @@ Data descriptors defined here:<br>
 <dl><dt><strong>__weakref__</strong></dt>
 <dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
 </dl>
+<dl><dt><strong>redis</strong></dt>
+</dl>
 <hr>
 Data and other attributes defined here:<br>
-<dl><dt><strong>__abstractmethods__</strong> = frozenset({'get_handler_for', 'get_server_attribute', 'handlers', 'has_server_attribute', 'load_helper_module', 'set_server_attribute'})</dl>
+<dl><dt><strong>__abstractmethods__</strong> = frozenset({'get_handler_for', 'get_server_attribute', 'handlers', 'has_server_attribute', 'load_helper_module', 'redis', ...})</dl>
 
 </td></tr></table> <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -198,5 +201,49 @@ Data descriptors defined here:<br>
 <dl><dt><strong>__weakref__</strong></dt>
 <dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
 </dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="RedisClient">class <strong>RedisClient</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="RedisClient-execute"><strong>execute</strong></a>(self, cmd, *args)</dt></dl>
+
+<dl><dt><a name="RedisClient-execute_str"><strong>execute_str</strong></a>(self, cmd, *args)</dt></dl>
+
+<dl><dt><a name="RedisClient-psub_and_xrange_str"><strong>psub_and_xrange_str</strong></a>(self, subkey, streamkey, last_count=0)</dt></dl>
+
+<dl><dt><a name="RedisClient-psub_and_xrange_str_for_each_id"><strong>psub_and_xrange_str_for_each_id</strong></a>(self, subkey, streamkey)</dt></dl>
+
+<dl><dt><a name="RedisClient-psubscribe"><strong>psubscribe</strong></a>(self, key)</dt></dl>
+
+<dl><dt><a name="RedisClient-punsubscribe"><strong>punsubscribe</strong></a>(self, key_or_channel)</dt></dl>
+
+<dl><dt><a name="RedisClient-subscribe"><strong>subscribe</strong></a>(self, key)</dt></dl>
+
+<dl><dt><a name="RedisClient-unsubscribe"><strong>unsubscribe</strong></a>(self, key_or_channel)</dt></dl>
+
+<dl><dt><a name="RedisClient-xadd"><strong>xadd</strong></a>(self, streamkey, *args, **kwargs)</dt></dl>
+
+<dl><dt><a name="RedisClient-xadd_and_publish"><strong>xadd_and_publish</strong></a>(self, pubkey, streamkey, *args, **kwargs)</dt></dl>
+
+<dl><dt><a name="RedisClient-xget_str"><strong>xget_str</strong></a>(self, streamkey, stream_id)</dt></dl>
+
+<dl><dt><a name="RedisClient-xlast_str"><strong>xlast_str</strong></a>(self, streamkey)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__abstractmethods__</strong> = frozenset({'execute', 'execute_str', 'psub_and_xrange_str', 'psub_and_xrange_str_for_each_id', 'psubscribe', 'punsubscribe', ...})</dl>
+
 </td></tr></table></td></tr></table>
 </body></html>
