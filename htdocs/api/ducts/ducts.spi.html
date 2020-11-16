@@ -38,6 +38,7 @@
 <dl>
 <dt><font face="helvetica, arial"><a href="ducts.spi.html#Event">Event</a>
 </font></dt><dt><font face="helvetica, arial"><a href="ducts.spi.html#EventHandler">EventHandler</a>
+</font></dt><dt><font face="helvetica, arial"><a href="ducts.spi.html#EventHandlerManager">EventHandlerManager</a>
 </font></dt><dt><font face="helvetica, arial"><a href="ducts.spi.html#EventSession">EventSession</a>
 </font></dt><dt><font face="helvetica, arial"><a href="ducts.spi.html#HandlerSpec">HandlerSpec</a>
 </font></dt></dl>
@@ -69,11 +70,15 @@ Data descriptors defined here:<br>
     
 <tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="EventHandler-handle"><strong>handle</strong></a>(self, event)</dt></dl>
+<dl><dt><a name="EventHandler-handle"><strong>handle</strong></a>(self, event)</dt><dd><tt>called&nbsp;when&nbsp;messaged&nbsp;is&nbsp;passed&nbsp;by&nbsp;the&nbsp;client.</tt></dd></dl>
 
-<dl><dt><a name="EventHandler-handle_closed"><strong>handle_closed</strong></a>(self, event_session)</dt></dl>
+<dl><dt><a name="EventHandler-handle_closed"><strong>handle_closed</strong></a>(self, event_session)</dt><dd><tt>called&nbsp;when&nbsp;the&nbsp;session&nbsp;is&nbsp;closed.</tt></dd></dl>
 
-<dl><dt><a name="EventHandler-setup"><strong>setup</strong></a>(self, handler_spec, manager)</dt></dl>
+<dl><dt><a name="EventHandler-run"><strong>run</strong></a>(self, manager)</dt><dd><tt>called&nbsp;onece&nbsp;when&nbsp;server&nbsp;is&nbsp;started.<br>
+coroutine&nbsp;returned&nbsp;by&nbsp;this&nbsp;method&nbsp;is&nbsp;passed&nbsp;to&nbsp;ensure_future&nbsp;method</tt></dd></dl>
+
+<dl><dt><a name="EventHandler-setup"><strong>setup</strong></a>(self, handler_spec, manager)</dt><dd><tt>called&nbsp;onece&nbsp;when&nbsp;server&nbsp;starts&nbsp;setup&nbsp;process.<br>
+coroutine&nbsp;returned&nbsp;by&nbsp;this&nbsp;method&nbsp;is&nbsp;awaited&nbsp;by&nbsp;the&nbsp;manager</tt></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>
@@ -88,6 +93,38 @@ Data and other attributes defined here:<br>
 <dl><dt><strong>ATTR_KEY</strong> = 'KEY'</dl>
 
 <dl><dt><strong>__abstractmethods__</strong> = frozenset({'handle', 'setup'})</dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="EventHandlerManager">class <strong>EventHandlerManager</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="EventHandlerManager-get_handler_for"><strong>get_handler_for</strong></a>(self, event_id)</dt></dl>
+
+<dl><dt><a name="EventHandlerManager-get_server_attribute"><strong>get_server_attribute</strong></a>(self, key)</dt></dl>
+
+<dl><dt><a name="EventHandlerManager-handlers"><strong>handlers</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="EventHandlerManager-has_server_attribute"><strong>has_server_attribute</strong></a>(self, key)</dt></dl>
+
+<dl><dt><a name="EventHandlerManager-load_helper_module"><strong>load_helper_module</strong></a>(self, module_name)</dt></dl>
+
+<dl><dt><a name="EventHandlerManager-set_server_attribute"><strong>set_server_attribute</strong></a>(self, key, value)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__abstractmethods__</strong> = frozenset({'get_handler_for', 'get_server_attribute', 'handlers', 'has_server_attribute', 'load_helper_module', 'set_server_attribute'})</dl>
 
 </td></tr></table> <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
