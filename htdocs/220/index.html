@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../main.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/@iflb/ducts@1.0.1/dist/ducts.js"></script>
+    <script defer src="./main.js"></script>
+    <title>[220] Connect / Reconnect</title>
+  </head>
+  <body>
+    <div id="app" class="wrapper">
+      <header>
+	<h1 class="title">[220] Connect / Reconnect</h1>
+      </header>
+      <section class="container">
+	<div class="messages" id="messages">
+	  <div v-for="(message, i) in messages" class="balloon" v-bind:class="{ balloon_right: message.balloon_right }">
+	    {{ "["+i+"]"+message.name + " speaks :" + message.message }}
+	  </div>
+	</div>
+      </section>
+      <section class="controller">
+	<div class="input"><input v-model="name" placeholder="Your name"></input></div>
+	<div class="input"><textarea v-model="message" placeholder="Your message lines"></textarea></div>
+	<div class="input"><input type="button" value="send message" v-on:click="send_message"/></div>
+	<br />
+	<div class="input"><input type="button" value="close" v-on:click="close"/></div>
+	<div class="input"><input type="button" value="connect" v-on:click="connect"/></div>
+	<div class="input"><input type="button" value="reconnect" v-on:click="reconnect"/></div>
+      </section>
+      <footer>
+	<span class="copy">Copyright ＆copy; 2020 Waseda Univ. All Rights Reserved.</span>
+      </footer>
+    </div>
+  </body>
+</html>
+
