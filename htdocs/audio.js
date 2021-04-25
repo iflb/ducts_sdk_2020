@@ -47,7 +47,7 @@ window.ducts.AudioRecorder = class {
 	    }
 	}
 	navigator.mediaDevices.getUserMedia({
-	    audio: isEdge ? true : {
+	    audio: self.isEdge ? true : {
 		echoCancellation: false
 	    }
 	}).then(function(mic) {
