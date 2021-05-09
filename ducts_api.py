@@ -1,6 +1,7 @@
 from enum import Enum
 import aiohttp
 import asyncio
+import async_timeout
 import msgpack
 from datetime import datetime
 import uuid as uuid_pkg
@@ -50,6 +51,9 @@ class Duct:
         self.EVENT = None
         self._ws = None
         self._last_rid = 0
+        self._loop_future = None
+        self._open_wait_lock = asyncio.Condition()
+        self._futures = {}
 
         self.connection_listener = ConnectionEventListener()
         self._event_handler = {}
@@ -74,16 +78,67 @@ class Duct:
 
 
                 await self.connection_listener.onopen(DuctConnectionEvent("onopen", event))
+                
                 hoge = asyncio.ensure_future(self._onmessage_loop(ws))
                 await hoge
-
                 #await self.send(self.next_rid(), self.EVENT["PROJECT"], { "Command": "List" })
                 
 
         except Exception as e:
-            print(e)
             await self.connection_listener.onerror(DuctConnectionEvent("onerror", e))
-    
+
+    async def _start_event_loop(self, reconnect = False):
+        if self._loop_future is not None and not self._loop_future.done():
+            raise asyncio.InvalidStateError('EventLoop is still running')
+
+        self._ws = None
+        self._loop_future = asyncio.ensure_future(self._run(reconnect))
+        def done_callback(task):
+            err = self._loop_future.exception()
+            self._loop_future = None
+            self._ws = None
+            if err is not None:
+                asyncio.ensure_future(self.connection_listener.onerror(DuctConnectionEvent("onerror", err)))
+            asyncio.ensure_future(self._onclose())
+        self._loop_future.add_done_callback(done_callback)
+
+        while self._ws is None and (self._loop_future is not None and not self._loop_future.done()):
+            try:
+                async with async_timeout.timeout(5) as cm:
+                    async with self._open_wait_lock:
+                        await self._open_wait_lock.wait()
+            except asyncio.TimeoutError as e:
+                pass
+        #print(self._ws)
+
+    async def _run(self, reconnect = False):
+        try :
+            async with aiohttp.ClientSession() as session:
+                #print(session)
+                if reconnect:
+                    connect_url = self.WSD["websocket_url_reconnect"]
+                else:
+                    async with session.get(self.wsd_url + self.query) as resp:
+                        self.WSD = await resp.json()
+                        self.EVENT = self.WSD["EVENT"]
+                    connect_url = self.WSD["websocket_url"]
+                async with session.ws_connect(connect_url) as ws:
+                    #print(ws)
+                    event = "someevent"  # FIXME
+                    
+                    self._ws = ws
+                    
+                    if reconnect:  await self._onreconnect(event)
+                    else:          await self._onopen(event)
+
+                    await self.connection_listener.onopen(DuctConnectionEvent("onopen", event))
+                    async with self._open_wait_lock:
+                        self._open_wait_lock.notify_all()
+                    await self._onmessage_loop(ws)
+        finally:
+            async with self._open_wait_lock:
+                self._open_wait_lock.notify_all()
+
     async def open(self, wsd_url, uuid=None, params=None):
         if self._ws:
             return
@@ -94,24 +149,25 @@ class Duct:
         if params:
             for key,val in params: self.query += f"&{key}={val}"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self.wsd_url + self.query) as resp:
-                self.WSD = await resp.json()
-                self.EVENT = self.WSD["EVENT"]
-
-            await self._connect(session)
-
+        await self._start_event_loop()
+            
     async def reconnect(self):
         if self._ws:
             return
+        await self._start_event_loop(reconnect=True)
 
-        async with aiohttp.ClientSession() as session:
-            await self._connect(session, reconnect=True)
-                
     async def send(self, rid, eid, data):
         data_msgpack = msgpack.packb([rid, eid, data])
         await self._ws.send_bytes(data_msgpack)
         return rid
+        
+    async def call(self, eid, data):
+        rid = self.next_rid()
+        data_msgpack = msgpack.packb([rid, eid, data])
+        future = asyncio.get_event_loop().create_future()
+        self._futures[rid] = future
+        await self._ws.send_bytes(data_msgpack)
+        return await future
         
     async def close(self):
         try:
@@ -164,6 +220,7 @@ class Duct:
         print("reconnected")
 
     async def _onmessage_loop(self, ws):
+        #print('onmessage_loop')
         async for msg in ws:
             try:
                 if msg.type==aiohttp.WSMsgType.CLOSE:
@@ -171,16 +228,24 @@ class Duct:
                     break
 
                 elif msg.type==aiohttp.WSMsgType.BINARY:
-                    await self.connection_listener.onmessage(DuctConnectionEvent("onmessage", msg))
                     rid, eid, data = msgpack.unpackb(msg.data)
+                    await self.connection_listener.onmessage(DuctMessageEvent(rid,eid,data))
                     try:
                         await self.catchall_event_handler(rid, eid, data)
                         handle = self._event_handler[eid] if eid in self._event_handler else self.uncaught_event_handler
                         await handle(rid, eid, data)
+                        future = self._futures.pop(rid, None)
+                        if future:
+                            if eid > 0:
+                                future.set_result(data)
+                            else:
+                                future.set_exception(Exception(data))
                     except Exception as e:
                         await self.event_error_handler(rid, eid, data, e)
             except Exception as e:
                 await self.event_error_handler(-1, -1, None, e)
+        #print('onmessage_loop done.')
+                
 
     async def _alive_monitoring_handler(self, rid, eid, data):
         client_received = datetime.now().timestamp()

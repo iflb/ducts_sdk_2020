@@ -21,7 +21,7 @@ class MyPlayground:
         
     async def main(self):
         self.duct.connection_listener.onopen = self.on_open
-        await self.duct.open("http://localhost:8080/ducts/wsd")
+        await self.duct.open("http://localhost:8089/ducts/wsd")
         
 if __name__=="__main__":
     pg = MyPlayground()
