@@ -6,6 +6,14 @@ import msgpack
 from datetime import datetime
 import uuid as uuid_pkg
 
+class DuctException(Exception):
+    pass
+
+class CallTimeout(DuctException):
+    def __init__(self, future):
+        super().__init__()
+        self.future = future
+    
 class DuctEvent:
     pass
 
@@ -161,13 +169,18 @@ class Duct:
         await self._ws.send_bytes(data_msgpack)
         return rid
         
-    async def call(self, eid, data):
+    async def call(self, eid, data, timeout = 10):
         rid = self.next_rid()
         data_msgpack = msgpack.packb([rid, eid, data])
         future = asyncio.get_event_loop().create_future()
         self._futures[rid] = future
         await self._ws.send_bytes(data_msgpack)
-        return await future
+        try:
+            async with async_timeout.timeout(timeout) as cm:
+                return await future
+        except asyncio.TimeoutError as e:
+            raise CallTimeout(future)
+
         
     async def close(self):
         try:
