@@ -4,7 +4,7 @@ from pathlib import Path
 
 import asyncio
 
-from ducts_api import *
+from ducts_client import *
 
 from ifconf import configure_main
 
@@ -17,22 +17,19 @@ class MyPlayground:
         self.duct = Duct()
         self.duct.connection_listener.onopen = self.on_open
         self.duct.connection_listener.onmessage = self.on_message
+        self.duct.connection_listener.onerror = self.on_error
 
     async def add_video(self, group_key):
         return await self.add_resource(group_key, Path('/home/teppei/video.mp4'))
         
     async def add_test_resources(self, group_key):
-        print('RESOURCE_ADD_START:GROUP={}'.format(group_key))
         await self.add_resource(group_key, Path('./requirements.txt'))
         await self.add_resource(group_key, Path('./README.md'))
         await self.add_resource(group_key, Path('./iflab.png'))
-        print('RESOURCE_ADD_DONE')
 
     async def add_group(self, group_name):
         metadata = {'group_name': group_name}
-        print('---------------------------------')
         ret = await self.duct.call(self.duct.EVENT['BLOBS_GROUP_ADD'], [metadata])
-        print('=================================')
         return ret
         
     async def add_resource(self, group_key, content_path):
@@ -48,9 +45,7 @@ class MyPlayground:
                     await self.duct.call(self.duct.EVENT['BLOBS_BUFFER_APPEND'], [buffer_key, buf])
                 else:
                     break
-        print('---------------------------------')
         ret = await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD_BY_BUFFER'], [group_key, buffer_key, metadata])
-        print('=====================')
         return ret
         
     async def handle_add_resources(self, rid, eid, data):
@@ -64,6 +59,9 @@ class MyPlayground:
         
     async def on_message(self, event):
         print("{}-{}-{}".format(event.rid, event.eid, event.data))
+        
+    async def on_error(self, event):
+        print(event)
         
     async def open(self):
         await self.duct.open("http://localhost:8089/ducts/wsd")
