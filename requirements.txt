@@ -7,4 +7,4 @@ aioredis
 async-timeout
 python-daemon
 psutil
-wave
+#wave
