@@ -228,7 +228,10 @@ class Duct:
                             if eid > 0:
                                 future.set_result(data)
                             else:
-                                future.set_exception(Exception(data))
+                                print('@@@@@@@@@@@@@@@@@@@@@@@@@@')
+                                print(data)
+                                print(eval(data))
+                                future.set_exception(eval(data))
                     except Exception as e:
                         await self.event_error_handler(rid, eid, data, e)
             except Exception as e:
