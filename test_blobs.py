@@ -40,8 +40,11 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
         self.duct = DuctsFileSystem()
         await self.duct.open()
         for key in self.GROUP_KEY:
+            print(key)
             if await self.duct.group_exists(key):
+                print('*************************************8')
                 print(await self.duct.delete_group(key))
+                print('*************************************8')
         await self.duct.add_group(self.GROUP_KEY[0])
         await self.duct.add_content_from_file(self.GROUP_KEY[0], Path(self.CONTENT_KEY[0]))
         
@@ -49,7 +52,7 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
         await self.setup()
         ret = await self.duct.get_group_metadata(self.GROUP_KEY[0])
         print (ret)
-        expected = {'group_name': '', 'content_type': 'application/octet-stream', 'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'group_key_text': 'ducts.unittest.group.0'}
+        expected = {'content_type': 'application/octet-stream', 'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'group_key_text': 'ducts.unittest.group.0'}
         for k,v in expected.items():
             self.assertEqual(ret[1][k], v)
         await self.duct.get_group_metadata('bc9810181d68f079c2553334b67bd6da13b5515e')
@@ -65,7 +68,7 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
         await self.setup()
         last_modified = int(Path(self.CONTENT_KEY[0]).lstat().st_mtime)
         ret = await self.duct.get_content_metadata(self.GROUP_KEY[0], self.CONTENT_KEY[0])
-        expected = {'content_key': '19359a61ae2446b51b549167b014da2fcf265768', 'content_key_name': 'requirements.txt', 'content_type': 'text/plain', 'last_modified': '{}'.format(last_modified), 'content_length': '98', 'cid': '1947e0ab255b09794ef17871e44e720677d8895e', 'order': '10'}
+        expected = {'content_key': '19359a61ae2446b51b549167b014da2fcf265768', 'content_type': 'text/plain', 'last_modified': '{}'.format(last_modified), 'content_length': '98', 'cid': '1947e0ab255b09794ef17871e44e720677d8895e', 'order': '10'}
         for k,v in expected.items():
             self.assertEqual(ret[1][k], v)
 
@@ -93,9 +96,9 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
         
     async def test_update_contents(self):
         await self.setup()
-        group_key, content_key = await self.duct.add_content(self.GROUP_KEY[0], b'abcdefg')
-        await self.duct.update_content(self.GROUP_KEY[0], content_key, 'hogehoge')
-        await self.duct.update_content(self.GROUP_KEY[0], content_key, 'hogehogegegege')
+        ret = await self.duct.add_content(self.GROUP_KEY[0], b'abcdefg')
+        await self.duct.update_content(self.GROUP_KEY[0], ret['content_key'], 'hogehoge')
+        await self.duct.update_content(self.GROUP_KEY[0], ret['content_key'], 'hogehogegegege')
         
             
 if __name__ == '__main__':

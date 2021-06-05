@@ -36,7 +36,7 @@ class DuctsFileSystem:
 
     async def add_group(self, group_key):
         metadata = {'group_key': group_key}
-        ret = await self.duct.call(self.duct.EVENT['BLOBS_GROUP_ADD'], [metadata])
+        ret = await self.duct.call(self.duct.EVENT['BLOBS_GROUP_ADD'], metadata)
         return ret
         
     async def get_group_metadata(self, group_key):
@@ -50,19 +50,22 @@ class DuctsFileSystem:
         return await self.duct.call(self.duct.EVENT['BLOBS_GROUP_DELETE'], group_key)
 
     async def add_content(self, group_key: str, content: bytes, metadata: dict = {}):
-        return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD'], [group_key, content, metadata])
+        param = metadata.copy()
+        param['group_key'] = group_key
+        param['content'] = content
+        return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD'], param)
 
     async def add_content_from_file(self, group_key: str, content_path: Path, metadata: dict = {}):
-        #print('1.############################{}|{}'.format(content_path.name, metadata))
+        param = metadata.copy()
+        param['group_key'] = group_key
+        
         stat = content_path.lstat()
-        if 'content_key' not in metadata:
-            metadata['content_key'] = content_path.name
-            #print('2.############################{}|{}'.format(content_path.name, metadata))
-        metadata['last_modified'] = stat.st_mtime
-        #print('3.############################{}|{}'.format(content_path, metadata))
+        if 'content_key' not in param:
+            param['content_key'] = content_path.name
+        param['last_modified'] = stat.st_mtime
         if stat.st_size <= 1024**2 - 1024:
-            return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD'], [group_key, content_path.read_bytes(), metadata])
-        #print('4.############################{}|{}'.format(content_path, metadata))
+            param['content'] = content_path.read_bytes()
+            return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD'], param)
         
         buffer_key = await self.duct.call(self.duct.EVENT['BLOBS_BUFFER_OPEN'], None)
         with open(content_path, 'rb', buffering=1024*512) as f:
@@ -72,19 +75,28 @@ class DuctsFileSystem:
                     await self.duct.call(self.duct.EVENT['BLOBS_BUFFER_APPEND'], [buffer_key, buf])
                 else:
                     break
-        #print('4.*************************{}'.format(metadata))
-        ret = await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD_BY_BUFFER'], [group_key, buffer_key, metadata])
+        param['buffer_key'] = buffer_key
+        ret = await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD_BY_BUFFER'], param)
         return ret
 
-    async def update_content(self, group_key, content_key, content):
-        return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_UPDATE'], [group_key, content_key, content])
+    async def update_content(self, group_key = '', content_key = '', content = b'', **otherparams):
+        param = otherparams.copy()
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        param['content'] = content
+        return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_UPDATE'], param)
         
     async def get_content_metadata(self, group_key, content_key):
-        ret = await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_METADATA'], [group_key, content_key])
-        return ret
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_METADATA'], param)
 
     async def content_exists(self, group_key, content_key):
-        return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_EXISTS'], [group_key, content_key])
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_EXISTS'], param)
 
     async def update_content_by_buffer_from_file(self, group_key, content_key, content_path):
         buffer_key = await self.duct.call(self.duct.EVENT['BLOBS_BUFFER_OPEN'], None)
@@ -95,7 +107,11 @@ class DuctsFileSystem:
                     await self.duct.call(self.duct.EVENT['BLOBS_BUFFER_APPEND'], [buffer_key, buf])
                 else:
                     break
-        ret = await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_UPDATE_BY_BUFFER'], [group_key, content_key, buffer_key])
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        param['buffer_key'] = buffer_key
+        ret = await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_UPDATE_BY_BUFFER'], param)
         return ret
 
     async def delete_all(self):
