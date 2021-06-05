@@ -7,10 +7,21 @@ import time
 
 from ducts_client import *
 
+from iflb import nameddict
 from ifconf import configure_main
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+FileMetadata = nameddict(
+    'FileMetadata',
+    (
+        'filename'
+        , 'content_key'
+        , 'group_key'
+        , 'namespace'
+    ))
 
 class DuctsFileSystem:
     
@@ -23,13 +34,17 @@ class DuctsFileSystem:
     async def open(self, wsd_url = "http://localhost:8080/ducts/wsd"):
         await self.duct.open(wsd_url)
 
+    async def close(self):
+        await self.duct.close()
+        
     async def on_open(self, event):
-        print('ON_OPEN')
+        #print('ON_OPEN')
         self.duct.set_event_handler(self.duct.EVENT['BLOBS_CONTENT_ADD'], self.handle_content_add)
-        print('HANDLER_ADD')
+        #print('HANDLER_ADD')
         
     async def on_message(self, event):
-        print("{}-{}-{}".format(event.rid, event.eid, event.data))
+        #print("{}-{}-{}".format(event.rid, event.eid, event.data))
+        pass
         
     async def on_error(self, event):
         print('ONERROR|EVENT={}|SOURCE={}'.format(event, event.source))
@@ -49,13 +64,14 @@ class DuctsFileSystem:
     async def delete_group(self, group_key):
         return await self.duct.call(self.duct.EVENT['BLOBS_GROUP_DELETE'], group_key)
 
-    async def add_content(self, group_key: str, content: bytes, metadata: dict = {}):
+    async def add_content(self, group_key: str, content: bytes, content_key: str = '', **metadata):
         param = metadata.copy()
         param['group_key'] = group_key
         param['content'] = content
+        param['content_key'] = content_key
         return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD'], param)
 
-    async def add_content_from_file(self, group_key: str, content_path: Path, metadata: dict = {}):
+    async def add_content_from_file(self, group_key: str, content_path: Path, **metadata):
         param = metadata.copy()
         param['group_key'] = group_key
         
@@ -79,8 +95,56 @@ class DuctsFileSystem:
         ret = await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD_BY_BUFFER'], param)
         return ret
 
-    async def update_content(self, group_key = '', content_key = '', content = b'', **otherparams):
-        param = otherparams.copy()
+    async def add_content_dir(self, group_key: str, content_key: str = '', **metadata):
+        param = metadata.copy()
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_ADD_DIR'], param)
+
+    async def add_dir_file(self
+                           , group_key : str
+                           , content_key : str
+                           , namespace : str = ''
+                           , filename : str = ''
+                           , file_content_key : str = ''
+                           , file_namespace : str = ''
+                           , file_group_key : str = ''):
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        param['namespace'] = namespace
+        file_param = {}
+        file_param['filename'] = filename
+        file_param['content_key'] = file_content_key
+        file_param['namespace'] = file_namespace
+        file_param['group_key'] = file_group_key
+        param['files'] = [file_param]
+        return await self.duct.call(self.duct.EVENT['BLOBS_DIR_ADD_FILES'], param)
+
+    async def add_dir_files(self
+                            , group_key : str
+                            , content_key : str
+                            , namespace : str = ''
+                            , files : list = []):
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        param['namespace'] = namespace
+        param['files'] = files
+        return await self.duct.call(self.duct.EVENT['BLOBS_DIR_ADD_FILES'], param)
+
+    async def list_dir_files(self
+                             , group_key : str
+                             , content_key : str
+                             , namespace : str = ''):
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        param['namespace'] = namespace
+        return await self.duct.call(self.duct.EVENT['BLOBS_DIR_LIST_FILES'], param)
+
+    async def update_content(self, group_key = '', content_key = '', content = b'', **metadata):
+        param = metadata.copy()
         param['group_key'] = group_key
         param['content_key'] = content_key
         param['content'] = content
@@ -118,22 +182,52 @@ class DuctsFileSystem:
         return await self.duct.call(self.duct.EVENT['BLOBS_DELETE_ALL'], "I'm crazy!")
 
     async def handle_content_add(self, rid, eid, data):
-        print('resource added : {}'.format(data))
+        #print('resource added : {}'.format(data))
+        pass
 
         
     async def main(self):
         await self.open()
         await self.delete_all()
-        group_key_text = 'test'
-        group_key = await self.add_group(group_key_text)
-        await self.add_test_resources(group_key)
-        await self.update_test_resources(group_key_text)
-        await self.add_and_update_video(group_key)
+        group_key = 'test'
+        if await self.group_exists(group_key):
+            ret = await self.duct.delete_group(key)
+            print(f'GROUP_DELETED|RET=[{ret}]')
+        else:
+            ret = await self.add_group(group_key)
+            print(f'GROUP_ADD|RET=[{ret}]')
+        root_dir_key = '/'
+        dir_key = root_dir_key
+        if not await self.content_exists(group_key, dir_key):
+            ret = await self.add_content_dir(group_key, dir_key)
+            print(f'DIR_CONTENT_ADD|RET=[{ret}]')
+            
+        content_keys = ['requirements.txt', 'README.md', 'iflab.png', 'video.mp4']
+        dir_files = []
+        for c in content_keys:
+            ret = await self.add_content_from_file(group_key, Path(c))
+            print(f'GROUP_ADD|RET=[{ret}]')
+            dir_files.append(FileMetadata({'filename': f'file_{c}', 'content_key': c}))
+        ret = await self.add_dir_files(group_key, dir_key, files = dir_files)
+        print(ret)
+        
+        dir_key = 'var'
+        if not await self.content_exists(group_key, dir_key):
+            ret = await self.add_content_dir(group_key, dir_key)
+            print(f'DIR_CONTENT_ADD|RET=[{ret}]')
+            ret = await self.add_dir_file(group_key, root_dir_key, filename = dir_key, file_content_key = dir_key)
+            print(f'DIR_FILE_ADD|RET=[{ret}]')
+            ret = await self.add_dir_files(group_key, dir_key, files = dir_files)
+            print(ret)
+            
 
+        
+        
+            
 if __name__=="__main__":
-    pg = MyPlayground()
+    fs = DuctsFileSystem()
     loop = asyncio.get_event_loop()
-    asyncio.ensure_future(pg.main())
+    asyncio.ensure_future(fs.main())
     try:
         loop.run_forever()
     except Exception as e:
