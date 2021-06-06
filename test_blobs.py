@@ -167,7 +167,61 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
         for k,v in expected.items():
             self.assertEqual(ret[k], v)
         self.assertEquals(ret, await self.duct.list_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0]))
-            
+
+
+    @asynctest
+    async def test_get_content(self):
+        ret = await self.duct.add_content_from_file(self.GROUP_KEY[0], Path('video.mp4'))
+        queue = await self.duct.get_content(**ret)
+        self.assertTrue(isinstance(queue, asyncio.Queue))
+        bio = BytesIO()
+        while True:
+            ret = await queue.get()
+            if ret is None:
+                break
+            bio.write(ret)
+        with open('video.mp4','rb') as f:
+            self.assertEquals(bio.getvalue(), f.read())
+        
+
+    @asynctest
+    async def test_ducts_message(self):
+        msg = 'hello, world!'
+        ret = await self.duct.duct.call(self.duct.duct.EVENT['DUCTS_TEST_MSG'], msg)
+        self.assertEqual(msg, ret)
+        
+    @asynctest
+    async def test_ducts_loop(self):
+        count = 10
+        queue = await self.duct.duct.call(self.duct.duct.EVENT['DUCTS_TEST_LOOP'], count)
+        self.assertTrue(isinstance(queue, asyncio.Queue))
+        it = iter(range(count))
+        total = 0
+        while True:
+            val = await queue.get()
+            if val is None:
+                break
+            total += next(it)
+            self.assertEquals(val, total)
+        
+    @asynctest
+    async def test_ducts_loop_bio(self):
+        queue = await self.duct.duct.call(self.duct.duct.EVENT['DUCTS_TEST_LOOP_BIO'], None)
+        self.assertTrue(isinstance(queue, asyncio.Queue))
+        bio = BytesIO()
+        while True:
+            ret = await queue.get()
+            if ret is None:
+                break
+            bio.write(ret)
+        self.assertEquals(bio.getvalue(), b'0123456789'*1024*1024)
+        
+    @asynctest
+    async def test_ducts_blob(self):
+        ret = await self.duct.duct.call(self.duct.duct.EVENT['DUCTS_TEST_BLOB'], None)
+        self.assertTrue(isinstance(ret, bytes))
+        self.assertEquals(ret, b'0123456789'*1024*1024)
+        
 if __name__ == '__main__':
     unittest.main()
 

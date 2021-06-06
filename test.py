@@ -156,6 +156,13 @@ class DuctsFileSystem:
         param['content_key'] = content_key
         return await self.duct.call(self.duct.EVENT['BLOBS_CONTENT_METADATA'], param)
 
+    async def get_content(self, group_key, content_key):
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        queue = await self.duct.call(self.duct.EVENT['BLOBS'], param)
+        return queue
+
     async def content_exists(self, group_key, content_key):
         param = {}
         param['group_key'] = group_key
