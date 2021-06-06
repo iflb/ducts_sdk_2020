@@ -101,7 +101,7 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
     async def test_get_content_metadata(self):
         last_modified = int(Path(self.CONTENT_KEY[0]).lstat().st_mtime)
         ret = await self.duct.get_content_metadata(self.GROUP_KEY[0], self.CONTENT_KEY[0])
-        expected = {'content_key': '19359a61ae2446b51b549167b014da2fcf265768', 'content_type': 'text/plain', 'last_modified': '{}'.format(last_modified), 'content_length': '98', 'cid': '1947e0ab255b09794ef17871e44e720677d8895e', 'order': '10'}
+        expected = {'content_key': '19359a61ae2446b51b549167b014da2fcf265768', 'content_type': 'text/plain', 'last_modified': '{}'.format(last_modified), 'content_length': '115', 'cid': '6af5218610965df61fc0a62e3ca1a96b7be591af', 'order': '10'}
         for k,v in expected.items():
             self.assertEqual(ret[1][k], v)
 
@@ -146,7 +146,7 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
     async def test_add_dir_file(self):
         await self.duct.add_content_dir(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0])
         ret = await self.duct.add_dir_file(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], filename = 'mytestfile.txt', file_content_key = self.CONTENT_KEY[0])
-        expected = {'mytestfile.txt': 'bc9810181d68f079c2553334b67bd6da13b5515e.19359a61ae2446b51b549167b014da2fcf265768.latest', '.': 'bc9810181d68f079c2553334b67bd6da13b5515e.10b3277eab37583d4ddb531bc469fbab2273ca4a.latest'}
+        expected = {'mytestfile.txt': 'bc9810181d68f079c2553334b67bd6da13b5515e.19359a61ae2446b51b549167b014da2fcf265768.latest.0', '.': 'bc9810181d68f079c2553334b67bd6da13b5515e.10b3277eab37583d4ddb531bc469fbab2273ca4a.latest.1'}
         for k,v in expected.items():
             self.assertEqual(ret[k], v)
         with self.assertRaises(ValueError):
@@ -163,7 +163,7 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
         for content in self.CONTENT_KEY:
             files.append(FileMetadata({'filename':content, 'content_key':content}))
         ret = await self.duct.add_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], files = files)
-        expected = {'requirements.txt': 'bc9810181d68f079c2553334b67bd6da13b5515e.19359a61ae2446b51b549167b014da2fcf265768.latest', '.': 'bc9810181d68f079c2553334b67bd6da13b5515e.10b3277eab37583d4ddb531bc469fbab2273ca4a.latest', 'iflab.png': 'bc9810181d68f079c2553334b67bd6da13b5515e.9e4966344bec94a01b1bbcce5fe15b837859b957.latest', 'README.md': 'bc9810181d68f079c2553334b67bd6da13b5515e.8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d.latest'}
+        expected = {'requirements.txt': 'bc9810181d68f079c2553334b67bd6da13b5515e.19359a61ae2446b51b549167b014da2fcf265768.latest.0', '.': 'bc9810181d68f079c2553334b67bd6da13b5515e.10b3277eab37583d4ddb531bc469fbab2273ca4a.latest.1', 'iflab.png': 'bc9810181d68f079c2553334b67bd6da13b5515e.9e4966344bec94a01b1bbcce5fe15b837859b957.latest.0', 'README.md': 'bc9810181d68f079c2553334b67bd6da13b5515e.8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d.latest.0'}
         for k,v in expected.items():
             self.assertEqual(ret[k], v)
         self.assertEquals(ret, await self.duct.list_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0]))
