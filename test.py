@@ -121,6 +121,46 @@ class DuctsFileSystem:
         param['files'] = [file_param]
         return await self.duct.call(self.duct.EVENT['BLOBS_DIR_ADD_FILES'], param)
 
+    async def add_dir_file(self
+                           , group_key : str
+                           , content_key : str
+                           , namespace : str = ''
+                           , filename : str = ''
+                           , file_content_key : str = ''
+                           , file_namespace : str = ''
+                           , file_group_key : str = ''):
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        param['namespace'] = namespace
+        file_param = {}
+        file_param['filename'] = filename
+        file_param['content_key'] = file_content_key
+        file_param['namespace'] = file_namespace
+        file_param['group_key'] = file_group_key
+        param['files'] = [file_param]
+        return await self.duct.call(self.duct.EVENT['BLOBS_DIR_ADD_FILES'], param)
+
+    async def dir_file_metadata(self
+                                , group_key : str
+                                , path: str
+                                , namespace : str = ''):
+        param = {}
+        param['group_key'] = group_key
+        param['path'] = path
+        param['namespace'] = namespace
+        return await self.duct.call(self.duct.EVENT['BLOBS_DIR_FILE_METADATA'], param)
+
+    async def dir_file_exists(self
+                              , group_key : str
+                              , path: str
+                              , namespace : str = ''):
+        param = {}
+        param['group_key'] = group_key
+        param['path'] = path
+        param['namespace'] = namespace
+        return await self.duct.call(self.duct.EVENT['BLOBS_DIR_FILE_EXISTS'], param)
+
     async def add_dir_files(self
                             , group_key : str
                             , content_key : str

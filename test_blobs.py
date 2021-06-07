@@ -134,14 +134,77 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
         await self.duct.update_content(self.GROUP_KEY[0], ret['content_key'], 'hogehogegegege')
         
     @asynctest
-    async def test_add_dir(self):
+    async def test_add_dir_wo_root(self):
         ret = await self.duct.add_content_dir(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0])
         self.assertEqual(ret, {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '10b3277eab37583d4ddb531bc469fbab2273ca4a'})
+                         
         ret = await self.duct.get_content_metadata(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0])
         expected = {'content_key': '10b3277eab37583d4ddb531bc469fbab2273ca4a', 'content_key_name': 'test.dir.0', 'content_type': 'application/json', 'is_dir':'1'}
         for k,v in expected.items():
             self.assertEqual(ret[1][k], v)
 
+    @asynctest
+    async def test_add_dir(self):
+        root = await self.duct.add_content_dir(self.GROUP_KEY[0], '/')
+        sub1 = await self.duct.add_content_dir(self.GROUP_KEY[0])
+        sub11 = await self.duct.add_content_dir(self.GROUP_KEY[0])
+        sub111 = await self.duct.add_content_dir(self.GROUP_KEY[0])
+        sub112 = await self.duct.add_content_dir(self.GROUP_KEY[0])
+        sub2 = await self.duct.add_content_dir(self.GROUP_KEY[0])
+        sub21 = await self.duct.add_content_dir(self.GROUP_KEY[0])
+        sub211 = await self.duct.add_content_dir(self.GROUP_KEY[0])
+        sub2111 = await self.duct.add_content_dir(self.GROUP_KEY[0])
+        f = await self.duct.add_content_from_file(self.GROUP_KEY[0], Path('./README.md'))
+
+        ret = await self.duct.add_dir_files(self.GROUP_KEY[0], root['content_key'], files = [
+            FileMetadata({'filename':'usr', 'content_key':sub1['content_key']})
+            , FileMetadata({'filename':'var', 'content_key':sub2['content_key']})
+        ])
+        #print(ret)
+        ret = await self.duct.add_dir_files(self.GROUP_KEY[0], sub1['content_key'], files = [
+            FileMetadata({'filename':'local', 'content_key':sub11['content_key']})
+        ])
+        #print(ret)
+        ret = await self.duct.add_dir_files(self.GROUP_KEY[0], sub11['content_key'], files = [
+            FileMetadata({'filename':'lib', 'content_key':sub111['content_key']})
+            , FileMetadata({'filename':'bin', 'content_key':sub112['content_key']})
+        ])
+        #print(ret)
+        
+        with self.assertRaises(ValueError):
+            ret = await self.duct.add_dir_files(self.GROUP_KEY[0], root['content_key'], files = [
+                FileMetadata({'filename':'var', 'content_key':sub2['content_key']})
+            ])
+
+        ret = await self.duct.add_dir_files(self.GROUP_KEY[0], sub2['content_key'], files = [
+            FileMetadata({'filename':'log', 'content_key':sub21['content_key']})
+        ])
+        #print(ret)
+        ret = await self.duct.add_dir_files(self.GROUP_KEY[0], sub21['content_key'], files = [
+            FileMetadata({'filename':'app', 'content_key':sub211['content_key']})
+        ])
+        #print(ret)
+        ret = await self.duct.add_dir_files(self.GROUP_KEY[0], sub211['content_key'], files = [
+            FileMetadata({'filename':'error', 'content_key':sub211['content_key']})
+        ])
+        #print(ret)
+        ret = await self.duct.add_dir_files(self.GROUP_KEY[0], sub2111['content_key'], files = [
+            FileMetadata({'filename':'some.txt', 'content_key':f['content_key']})
+        ])
+        #print(ret)
+
+
+        self.assertTrue(await self.duct.dir_file_exists(self.GROUP_KEY[0], '/'))
+        self.assertTrue(await self.duct.dir_file_exists(self.GROUP_KEY[0], '/usr/local'))
+        self.assertTrue(await self.duct.dir_file_exists(self.GROUP_KEY[0], '/usr/local/lib'))
+        self.assertTrue(await self.duct.dir_file_exists(self.GROUP_KEY[0], '/usr/local/bin'))
+        self.assertFalse(await self.duct.dir_file_exists(self.GROUP_KEY[0], '/usr/local/not_found'))
+        self.assertFalse(await self.duct.dir_file_exists(self.GROUP_KEY[0], '/var/log/app/error/some.txt'))
+        self.assertFalse(await self.duct.dir_file_exists(self.GROUP_KEY[0], '/var/log/error.log'))
+        self.assertFalse(await self.duct.dir_file_exists(self.GROUP_KEY[0], '/hogehogexx'))
+        with self.assertRaises(KeyError):
+            await self.duct.dir_file_exists('not_exists', '/')
+                         
     @asynctest
     async def test_add_dir_file(self):
         await self.duct.add_content_dir(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0])
