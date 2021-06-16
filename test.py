@@ -173,6 +173,18 @@ class DuctsFileSystem:
         param['files'] = files
         return await self.duct.call(self.duct.EVENT['BLOBS_DIR_ADD_FILES'], param)
 
+    async def rm_dir_files(self
+                           , group_key : str
+                           , content_key : str
+                           , namespace : str = ''
+                           , files : list = []):
+        param = {}
+        param['group_key'] = group_key
+        param['content_key'] = content_key
+        param['namespace'] = namespace
+        param['files'] = files
+        return await self.duct.call(self.duct.EVENT['BLOBS_DIR_RM_FILES'], param)
+
     async def list_dir_files(self
                              , group_key : str
                              , content_key : str

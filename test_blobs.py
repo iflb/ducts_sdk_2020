@@ -209,7 +209,7 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
     async def test_add_dir_file(self):
         await self.duct.add_content_dir(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0])
         ret = await self.duct.add_dir_file(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], filename = 'mytestfile.txt', file_content_key = self.CONTENT_KEY[0])
-        expected = {'mytestfile.txt': 'bc9810181d68f079c2553334b67bd6da13b5515e.19359a61ae2446b51b549167b014da2fcf265768.latest.0', '.': 'bc9810181d68f079c2553334b67bd6da13b5515e.10b3277eab37583d4ddb531bc469fbab2273ca4a.latest.1'}
+        expected = {'.': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '10b3277eab37583d4ddb531bc469fbab2273ca4a', 'version': 'latest', 'is_dir': '1'}, 'mytestfile.txt': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '19359a61ae2446b51b549167b014da2fcf265768', 'version': 'latest', 'is_dir': '0'}}
         for k,v in expected.items():
             self.assertEqual(ret[k], v)
         with self.assertRaises(ValueError):
@@ -218,7 +218,7 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
             await self.duct.add_dir_file(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], filename = 'mytestfile.txt', file_content_key = self.CONTENT_KEY[1])
         
     @asynctest
-    async def test_add_dir_files(self):
+    async def test_add_and_remove_dir_files(self):
         await self.duct.add_content_dir(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0])
         await self.duct.add_content_from_file(self.GROUP_KEY[0], Path('./README.md'))
         await self.duct.add_content_from_file(self.GROUP_KEY[0], Path('./iflab.png'))
@@ -226,11 +226,19 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
         for content in self.CONTENT_KEY:
             files.append(FileMetadata({'filename':content, 'content_key':content}))
         ret = await self.duct.add_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], files = files)
-        expected = {'requirements.txt': 'bc9810181d68f079c2553334b67bd6da13b5515e.19359a61ae2446b51b549167b014da2fcf265768.latest.0', '.': 'bc9810181d68f079c2553334b67bd6da13b5515e.10b3277eab37583d4ddb531bc469fbab2273ca4a.latest.1', 'iflab.png': 'bc9810181d68f079c2553334b67bd6da13b5515e.9e4966344bec94a01b1bbcce5fe15b837859b957.latest.0', 'README.md': 'bc9810181d68f079c2553334b67bd6da13b5515e.8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d.latest.0'}
+        expected = {'requirements.txt': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '19359a61ae2446b51b549167b014da2fcf265768', 'version': 'latest', 'is_dir': '0'}, '.': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '10b3277eab37583d4ddb531bc469fbab2273ca4a', 'version': 'latest', 'is_dir': '1'}, 'iflab.png': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '9e4966344bec94a01b1bbcce5fe15b837859b957', 'version': 'latest', 'is_dir': '0'}, 'README.md': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d', 'version': 'latest', 'is_dir': '0'}}
         for k,v in expected.items():
             self.assertEqual(ret[k], v)
         self.assertEquals(ret, await self.duct.list_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0]))
 
+        ret = await self.duct.rm_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], files = [self.CONTENT_KEY[0]])
+        expected = {'.': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '10b3277eab37583d4ddb531bc469fbab2273ca4a', 'version': 'latest', 'is_dir': '1'}, 'iflab.png': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '9e4966344bec94a01b1bbcce5fe15b837859b957', 'version': 'latest', 'is_dir': '0'}, 'README.md': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d', 'version': 'latest', 'is_dir': '0'}}
+        for k,v in expected.items():
+            self.assertEqual(ret[k], v)
+        ret = await self.duct.rm_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], files = [self.CONTENT_KEY[1], self.CONTENT_KEY[2]])
+        expected = {'.': {'group_key': 'bc9810181d68f079c2553334b67bd6da13b5515e', 'content_key': '10b3277eab37583d4ddb531bc469fbab2273ca4a', 'version': 'latest', 'is_dir': '1'}}
+        for k,v in expected.items():
+            self.assertEqual(ret[k], v)
 
     @asynctest
     async def test_get_content(self):
