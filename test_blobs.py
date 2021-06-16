@@ -241,6 +241,19 @@ class TestBlobsModule(aiounittest.AsyncTestCase):
             self.assertEqual(ret[k], v)
 
     @asynctest
+    async def test_add_and_remove_dir_files_with_other_format(self):
+        await self.duct.add_content_dir(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0])
+        orig = await self.duct.list_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0])
+
+        await self.duct.add_content_from_file(self.GROUP_KEY[0], Path('./README.md'))
+        await self.duct.add_content_from_file(self.GROUP_KEY[0], Path('./iflab.png'))
+        files = [FileMetadata({'filename':content, 'content_key':content}) for content in self.CONTENT_KEY]
+        ret = await self.duct.add_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], files = files)
+        ret = await self.duct.rm_dir_files(self.GROUP_KEY[0], self.CONTENT_DIR_KEY[0], files = files)
+        for k,v in orig.items():
+            self.assertEqual(ret[k], v)
+
+    @asynctest
     async def test_get_content(self):
         ret = await self.duct.add_content_from_file(self.GROUP_KEY[0], Path('video.mp4'))
         queue = await self.duct.get_content(**ret)
